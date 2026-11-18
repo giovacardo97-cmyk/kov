@@ -14,7 +14,8 @@
 <script>
 (function(){var t=null;try{t=localStorage.getItem("kov_theme");}catch(e){}
   if(t!=="light"&&t!=="dark") t=(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";
-  document.documentElement.setAttribute("data-theme",t);})();
+  document.documentElement.setAttribute("data-theme",t);
+  try{if(window.KovNative&&KovNative.setBars)KovNative.setBars(t==="light");}catch(e){}})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -226,6 +227,7 @@ h1.big em{font-style:normal;color:var(--lime)}
 .act .c.dk{background:var(--card2);color:#fff;box-shadow:inset 0 0 0 2px #3a3a3a}
 .acts.four{grid-template-columns:repeat(4,1fr);gap:4px}
 .acts.four .c{width:62px;height:62px;font-size:15px}
+.acts.four.three{grid-template-columns:repeat(3,1fr)}
 .act .c.bl{background:var(--card2);color:#5ec8ec;box-shadow:inset 0 0 0 2px #5ec8ec}
 .act .c.gr{background:var(--card2);color:var(--lime);box-shadow:inset 0 0 0 2px var(--lime)}
 .act .c.nv{background:var(--card2);color:#ff9b4a;box-shadow:inset 0 0 0 2px #3a3a3a}
@@ -333,7 +335,7 @@ html[data-theme=light]{
   --bg:#ecece7; --card:#fff; --card2:#efefea; --card3:#e2e2dc;
   --line:#dcdcd6; --mute:#6c6c66; --mute2:#9c9c95;
   --paper:#fff; --paper2:#efefea;
-  --fg:#111; --acc:#5c7a00; --ringoff:#dcdcd5; --ringon:#a9cc1f;
+  --fg:#111; --acc:#111; --ringoff:#dcdcd5; --ringon:#111;
 }
 html[data-theme=light] .pillst{color:#333}
 html[data-theme=light] .pillst span,html[data-theme=light] .search input,html[data-theme=light] .shtop .tt b{color:#111}
@@ -372,7 +374,7 @@ html[data-theme=light] .seg button.on{color:var(--ink)}
 html[data-theme=light] .act .c{background:#111;color:#fff}
 html[data-theme=light] .act .c.dk{background:#fff;color:#111;box-shadow:inset 0 0 0 2px #d4d4ce}
 html[data-theme=light] .act .c.bl{background:#fff;color:#1a8fbd;box-shadow:inset 0 0 0 2px #1a8fbd}
-html[data-theme=light] .act .c.gr{background:#fff;color:var(--acc);box-shadow:inset 0 0 0 2px var(--acc)}
+html[data-theme=light] .act .c.gr{background:var(--lime);color:var(--ink);box-shadow:none}
 html[data-theme=light] .act .c.nv{background:#fff;color:#d9480f;box-shadow:inset 0 0 0 2px #d4d4ce}
 html[data-theme=light] .act .t{color:#444}
 html[data-theme=light] .rules,html[data-theme=light] .rfact .tx{color:#333}
@@ -388,6 +390,10 @@ html[data-theme=light] .tabbar button.on{background:var(--lime)}
 html[data-theme=light] .tabbar button.on svg{stroke:var(--ink)}
 html[data-theme=light] .teamlogo{box-shadow:0 0 0 2px #fff}
 html[data-theme=light] #fedpop{background:rgba(0,0,0,.35)}
+
+/* tema chiaro: accenti in nero con evidenziatore fluo */
+html[data-theme=light] h1.big em,html[data-theme=light] .gg .mv.nx{background:linear-gradient(transparent 58%,var(--lime) 58%,var(--lime) 92%,transparent 92%);padding:0 .06em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+html[data-theme=light] .rfact b,html[data-theme=light] .rintro b,html[data-theme=light] .rsteps b,html[data-theme=light] .rules b{background:linear-gradient(transparent 55%,#e3f77f 55%);-webkit-box-decoration-break:clone;box-decoration-break:clone}
 
 </style>
 
@@ -762,13 +768,12 @@ function viewQuote(){
   return `<h1 class="big">Le <em>quote</em>${ARROW}</h1><p class="sub">La palestra si paga insieme 💪</p>
   <div class="cash"><svg class="ast" viewBox="0 0 100 100"><path d="M50 4v92M4 50h92M17 17l66 66M83 17 17 83"/></svg>
     <div class="k">KOV · CASSA</div><div class="t">Soldi in cassa</div><div class="n">${eur(vers)}</div><div class="bt">palestra €${CONFIG.costoPalestra||"–"} / serata</div></div>
-  <div class="acts four">
+  <div class="acts four three">
     <div class="act"><div class="c dk">${daVers==null?"?":Math.round(daVers)+"€"}</div><div class="t">Affitto<br>palestra</div></div>
     <div class="act"><div class="c nv">${Math.round(Math.abs(tot))}€</div><div class="t">Da ricevere</div></div>
-    <div class="act"><div class="c ${netto!=null&&netto<0?"nv":"gr"}">${netto==null?"?":Math.round(netto)+"€"}</div><div class="t">Netto<br>utile</div></div>
-    <div class="act"><div class="c bl">${MODEL.nettoUsabile==null?"?":Math.round(MODEL.nettoUsabile)+"€"}</div><div class="t">Netto<br>usabile</div></div>
+    <div class="act"><div class="c ${MODEL.nettoUsabile!=null&&MODEL.nettoUsabile<0?"nv":"gr"}">${MODEL.nettoUsabile==null?"?":Math.round(MODEL.nettoUsabile)+"€"}</div><div class="t">Netto</div></div>
   </div>
-  ${daVers==null?`<p class="note" style="margin-top:-18px">Per calcolare "affitto palestra" e "netto utile" manca il costo della palestra a serata.</p>`:""}
+  ${daVers==null?`<p class="note" style="margin-top:-18px">Per calcolare "affitto palestra" manca il costo della palestra a serata.</p>`:""}
   ${qd.length?`<div class="sec"><h2>Storico pagamenti</h2><span class="ct">${qd.length} giornate</span></div>
   <div class="rows">${qd.slice().reverse().map(d=>`<div class="row" style="padding:10px 18px 10px 10px"><div class="av">${ICON.cal.replace("<svg",'<svg style="width:18px;height:18px;stroke:var(--acc);fill:none;stroke-width:2;stroke-linecap:round"')}</div>
     <div class="mid"><div class="nm">Lunedì ${lungo(d.label)}</div><div class="ds">${pres(d.pres)}</div></div><div class="pc" style="padding-right:0"><b>${eur(d.inc)}</b><small>incassati</small></div></div>`).join("")}</div>`:""}
@@ -925,6 +930,7 @@ function applyTheme(){
   document.documentElement.setAttribute("data-theme",t);
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content",t==="light"?"#ecece7":"#0b0b0b");
   const b=document.getElementById("themeBtn"); if(b) b.setAttribute("aria-label",t==="light"?"Passa al tema scuro":"Passa al tema chiaro");
+  try{ if(window.KovNative&&KovNative.setBars) KovNative.setBars(t==="light"); }catch(e){}   // APK ≥ 1.3: colora le barre di Android
 }
 document.getElementById("themeBtn").onclick=()=>{
   const now=document.documentElement.getAttribute("data-theme");
