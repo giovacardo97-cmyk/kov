@@ -1,6 +1,6 @@
 {
   "name": "KOV · Segreteria",
-  "short_name": "Segreteria",
+  "short_name": "KOV Segreteria",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
