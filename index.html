@@ -312,6 +312,16 @@ h1.big em{font-style:normal;color:var(--lime)}
 .rteams .tm span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--card3);color:#fff}
 .rteams .tm.l span{background:var(--lime);color:var(--ink)}
 .rteams .vs{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:var(--mute)}
+.phist{background:var(--card);border-radius:28px;padding:6px 8px;margin-bottom:10px}
+.ph-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 8px;border-top:1px solid var(--line)}
+.ph-r:first-child{border-top:0}
+.ph-d b{display:block;font-size:15px;font-weight:700}
+.ph-d span{font-size:12px;color:var(--mute);font-weight:600}
+.ph-ok,.ph-no{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:800;padding:6px 12px;border-radius:20px;white-space:nowrap}
+.ph-ok{background:var(--lime);color:#111}
+.ph-ok svg{width:14px;height:14px;stroke:#111;stroke-width:2.6;fill:none}
+.ph-no{background:rgba(255,155,74,.16);color:#ff9b4a;box-shadow:inset 0 0 0 1.5px #ff9b4a}
+[data-theme="light"] .ph-no{background:rgba(217,72,15,.08);color:#c2410c;box-shadow:inset 0 0 0 1.5px #d9480f}
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:30;overflow-y:auto;background:var(--bg);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .sheet.open{transform:none}
@@ -524,6 +534,7 @@ function buildModel(csv){
       p.q=dates.map(d=>({c:!!cell(r,d.col),eur:num(r[d.col+1])}));
     }
     const all=Object.values(M.players).filter(p=>p.q);
+    M.qdates=dates.map(d=>d.label);
     M.qdays=dates.map((d,j)=>({label:d.label,pres:all.filter(p=>p.q[j].c).length,inc:all.reduce((s,p)=>s+(isNaN(p.q[j].eur)?0:p.q[j].eur),0)})).filter(d=>d.pres>0);
     // riepilogo (Presenze / A carico / Versato / Da pagare)
     const sh2=q.findIndex((r,ix)=>ix>=i&&r.some(c=>/presenze/i.test(c||"")));
@@ -869,6 +880,7 @@ function openP(k){
   const sets=(p.setV||0)+(p.setP||0);
   const wins=ms.filter(m=>m&&m.v>m.p).length, played=ms.filter(Boolean).length;
   const gioc=isNaN(p.giocate)?played:p.giocate;
+  const hist=(p.q||[]).map((x,j)=>({lab:(MODEL.qdates||[])[j],c:x.c,eur:x.eur,paid:!isNaN(x.eur)&&x.eur>0})).filter(x=>x.c||x.paid).reverse();
   $("#sheetIn").innerHTML=`
   <div class="shtop"><button class="rb" onclick="closeP()" aria-label="Indietro">${ICON.back}</button>
     <div class="tt"><b>${femm(p.nome)?"Giocatrice":"Giocatore"}</b>${p.dentro?"in classifica":"fuori classifica"}</div>
@@ -884,7 +896,10 @@ function openP(k){
     ${barsHTML(days.map((d,i)=>{const m=ms[i];return m?{h:m.v/Math.max(1,m.v+m.p),lab:short(d.label),hi:i===bestI,tip:m.v+"–"+m.p,txt:m.v+"-"+m.p}:{none:1,lab:short(d.label)};}))}</div>`:""}
   <div class="sec"><h2>Quote</h2></div>
   <div class="kv"><div class="ic">${ICON.card}</div><div class="k">Quote versate</div><div class="v">${eur(p.versato)}</div></div>
-  <div class="kv"><div class="ic">${ICON.clock}</div><div class="k">Da saldare</div><div class="v ${p.dapagare<0?"neg":"ok"}">${p.dapagare<0?eur(Math.abs(p.dapagare)):"Niente 👍"}</div></div>`;
+  <div class="kv"><div class="ic">${ICON.clock}</div><div class="k">Da saldare</div><div class="v ${p.dapagare<0?"neg":"ok"}">${p.dapagare<0?eur(Math.abs(p.dapagare)):"Niente 👍"}</div></div>
+  ${hist.length?`<div class="sec" style="margin-top:22px"><h2>Pagamenti per serata</h2><span class="ct">${hist.filter(x=>x.paid).length}/${hist.filter(x=>x.c).length} pagate</span></div>
+  <div class="phist">${hist.map(x=>`<div class="ph-r"><div class="ph-d"><b>${x.lab?lungo(x.lab):"–"}</b><span>${x.c?"presente":"assente"}</span></div>
+    ${x.paid?`<span class="ph-ok">${ICON.check} ${eur(x.eur)}</span>`:`<span class="ph-no">da pagare</span>`}</div>`).join("")}</div>`:""}`;
   const s=$("#sheet"); s.scrollTop=0; s.classList.add("open");
   const bars=s.querySelector(".bars"); if(bars) fitBars(bars);
 }
