@@ -348,6 +348,21 @@ h1.big em{font-style:normal;color:var(--lime)}
 .reg-open .rsteps li{animation-delay:calc(var(--d,0) * 120ms + 260ms + var(--k,0) * 55ms)}
 #rulesBtn svg{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
 #rulesBtn.on svg{transform:rotate(-8deg) scale(1.1)}
+.act{text-align:center}
+.vchi{font-size:11.5px;font-weight:700;color:#ff9b4a}
+[data-theme="light"] .vchi{color:#c2410c}
+.sheetw.debts{box-shadow:inset 0 0 0 2px #ff9b4a;scroll-margin-top:80px}
+.sheetw.debts h3 .dtot{color:#d9480f;margin-left:6px}
+.sheetw.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,100%{transform:none}20%{transform:scale(1.02)}40%{transform:none}}
+.fold{margin-bottom:28px}
+.fold-h{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border-radius:40px;padding:8px 8px 8px 20px;font-size:15px;font-weight:700;color:var(--fg,#fff)}
+.fold-h .pres-t{background:var(--acc,var(--lime));color:var(--bg)}
+.fold .pres-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .5s cubic-bezier(.2,.8,.2,1)}
+.fold.open .pres-b{grid-template-rows:1fr}
+.fold.open .pres-in{opacity:1;transform:none;transition-delay:.08s}
+.fold.open .pres-t{transform:rotate(45deg)}
+.fold.open .pres-in .row{animation:barUp .5s cubic-bezier(.2,.9,.25,1.15) both}
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:30;overflow-y:auto;background:var(--bg);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .sheet.open{transform:none}
@@ -799,6 +814,10 @@ function viewClassifica(){
   <p class="note">${SEG==="dentro"?`Per entrare in classifica serve aver giocato almeno il ${MODEL.soglia}% delle serate.`:`Questi giocatori non hanno ancora il ${MODEL.soglia}% di presenze: la loro % set è indicativa.`}</p>`;
 }
 
+function vaiDebiti(){const d=document.getElementById("debiti");if(!d)return;d.scrollIntoView({behavior:"smooth",block:"start"});d.classList.remove("flash");void d.offsetWidth;d.classList.add("flash");}
+function toggleFold(btn){const f=btn.closest(".fold");const o=!f.classList.contains("open");
+  if(o)f.querySelectorAll(".pres-in .row").forEach((r,i)=>{r.style.animationDelay=(80+i*45)+"ms";});
+  f.classList.toggle("open",o);btn.setAttribute("aria-expanded",o);}
 function viewQuote(){
   const P=Object.values(MODEL.players);
   const vers=P.reduce((s,p)=>s+(isNaN(p.versato)?0:p.versato),0);
@@ -815,14 +834,17 @@ function viewQuote(){
     <div class="k">KOV · CASSA</div><div class="t">Soldi in cassa</div><div class="n">${eur(vers)}</div><div class="bt">palestra €${CONFIG.costoPalestra||"–"} / serata</div></div>
   <div class="acts four three">
     <div class="act"><div class="c dk">${daVers==null?"?":Math.round(daVers)+"€"}</div><div class="t">Affitto<br>palestra</div></div>
-    <div class="act"><div class="c nv">${Math.round(Math.abs(tot))}€</div><div class="t">Da ricevere</div></div>
+    <button class="act" onclick="vaiDebiti()"><div class="c nv">${Math.round(Math.abs(tot))}€</div><div class="t">Da ricevere<br><span class="vchi">vedi chi ↓</span></div></button>
     <div class="act"><div class="c ${MODEL.nettoUsabile!=null&&MODEL.nettoUsabile<0?"nv":"gr"}">${MODEL.nettoUsabile==null?"?":Math.round(MODEL.nettoUsabile)+"€"}</div><div class="t">Netto</div></div>
   </div>
   ${daVers==null?`<p class="note" style="margin-top:-18px">Per calcolare "affitto palestra" manca il costo della palestra a serata.</p>`:""}
-  ${qd.length?`<div class="sec"><h2>Storico pagamenti</h2><span class="ct">${qd.length} giornate</span></div>
-  <div class="rows">${qd.slice().reverse().map(d=>`<div class="row" style="padding:10px 18px 10px 10px"><div class="av">${ICON.cal.replace("<svg",'<svg style="width:18px;height:18px;stroke:var(--acc);fill:none;stroke-width:2;stroke-linecap:round"')}</div>
-    <div class="mid"><div class="nm">Lunedì ${lungo(d.label)}</div><div class="ds">${pres(d.pres)}</div></div><div class="pc" style="padding-right:0"><b>${eur(d.inc)}</b><small>incassati</small></div></div>`).join("")}</div>`:""}
-  ${debt.length?`<div class="sheetw"><div class="grab"></div><h3>Da saldare <span class="chip" style="font-size:12px;padding:5px 11px">${debt.length}</span></h3>${debt.map(wr).join("")}</div>`:""}
+  ${debt.length?`<div class="sheetw debts" id="debiti"><div class="grab"></div><h3><span>Da saldare <span class="dtot">${eur(Math.abs(tot))}</span></span><span class="chip" style="font-size:12px;padding:5px 11px">${debt.length}</span></h3>${debt.map(wr).join("")}</div>`:`<div class="sheetw" id="debiti"><h3>Tutti in regola 👍</h3></div>`}
+  ${qd.length?(()=>{const R=qd.slice().reverse(),top=R.slice(0,2),rest=R.slice(2),rf=d=>`<div class="row" style="padding:10px 18px 10px 10px"><div class="av">${ICON.cal.replace("<svg",'<svg style="width:18px;height:18px;stroke:var(--acc);fill:none;stroke-width:2;stroke-linecap:round"')}</div>
+    <div class="mid"><div class="nm">Lunedì ${lungo(d.label)}</div><div class="ds">${pres(d.pres)}</div></div><div class="pc" style="padding-right:0"><b>${eur(d.inc)}</b><small>incassati</small></div></div>`;
+    return `<div class="sec"><h2>Storico pagamenti</h2><span class="ct">${qd.length} giornate</span></div>
+  <div class="rows" style="margin-bottom:${rest.length?8:28}px">${top.map(rf).join("")}</div>
+  ${rest.length?`<div class="fold"><button class="fold-h" onclick="toggleFold(this)" aria-expanded="false"><span>Altre ${rest.length} giornate</span><span class="pres-t" aria-hidden="true">+</span></button>
+    <div class="pres-b"><div class="pres-in"><div class="rows" style="margin:8px 0 0">${rest.map(rf).join("")}</div></div></div></div>`:""}`;})():""}
   <div class="sheetw"><div class="grab"></div><h3>In regola <span class="chip dk" style="font-size:12px;padding:5px 11px">${ok.length}</span></h3>${ok.map(wr).join("")}</div>`;
 }
 
