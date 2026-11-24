@@ -363,6 +363,19 @@ h1.big em{font-style:normal;color:var(--lime)}
 .fold.open .pres-in{opacity:1;transform:none;transition-delay:.08s}
 .fold.open .pres-t{transform:rotate(45deg)}
 .fold.open .pres-in .row{animation:barUp .5s cubic-bezier(.2,.9,.25,1.15) both}
+#novita{position:fixed;inset:0;z-index:46;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+#novita.open{opacity:1;pointer-events:auto}
+#novita .nbox{width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:var(--bg);border-radius:32px 32px 0 0;padding:22px 18px calc(env(safe-area-inset-bottom) + 20px);transform:translateY(60px);transition:transform .45s cubic-bezier(.2,.8,.2,1);box-shadow:0 -1px 0 var(--line)}
+#novita.open .nbox{transform:none}
+#novita .nk{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:var(--mute);letter-spacing:.1em}
+#novita h2{font-size:30px;font-weight:800;margin:2px 0 16px;letter-spacing:-.5px;color:var(--fg,#fff)}
+#novita h2 em{font-style:normal;color:var(--acc,var(--lime))}
+#novita .nv{display:flex;gap:12px;align-items:flex-start;background:var(--card);border-radius:24px;padding:12px 14px;margin-bottom:8px;opacity:0}
+#novita.open .nv{animation:barUp .5s cubic-bezier(.2,.9,.25,1.15) both;animation-delay:calc(var(--k) * 70ms + 200ms)}
+#novita .nd{width:32px;height:32px;flex:none;border-radius:50%;background:var(--lime);color:#111;display:grid;place-items:center;font-weight:800;font-size:14px}
+#novita .nv b{display:block;font-size:15.5px;font-weight:800;color:var(--fg,#fff)}
+#novita .nv p{margin:2px 0 0;font-size:13.5px;line-height:1.4;color:var(--mute);font-weight:500}
+#novita .nok{display:block;width:100%;margin-top:12px;background:var(--lime);color:#111;border-radius:30px;padding:15px;font-size:16px;font-weight:800;text-align:center}
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:30;overflow-y:auto;background:var(--bg);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .sheet.open{transform:none}
@@ -960,7 +973,8 @@ function openP(k){
   const bars=s.querySelector(".bars"); if(bars) fitBars(bars);
 }
 function closeP(){$("#sheet").classList.remove("open");}
-window.kovBack=function(){ const fp=document.getElementById("fedpop"); if(fp&&fp.classList.contains("open")){fp.classList.remove("open");return true;}
+window.kovBack=function(){ const nv=document.getElementById("novita"); if(nv&&nv.classList.contains("open")){nv.querySelector(".nok").click();return true;}
+  const fp=document.getElementById("fedpop"); if(fp&&fp.classList.contains("open")){fp.classList.remove("open");return true;}
   if($("#sheet").classList.contains("open")){closeP();return true;}
   if(TAB!=="home"){go("home");return true;} return false; };
 
@@ -1014,6 +1028,29 @@ applyTheme();
 document.getElementById("ver").textContent="versione "+APP_VERSION;
 render(); refresh(); checkUpdate();
 setTimeout(()=>{const sp=document.getElementById('splash');if(sp)sp.remove();},2700);
+/* ---- novità della versione: mostrate una volta sola ---- */
+const NOVITA={ver:APP_VERSION, voci:[
+  ["Presenze più pulite","In Home le presenze sono una pillola: tocca il + per vedere il grafico delle serate."],
+  ["Debiti a portata di mano","Nelle Quote chi deve ancora pagare è subito in alto: tocca «vedi chi ↓» sotto Da ricevere."],
+  ["Storico più corto","Si vedono le ultime 2 serate, le altre si aprono con il +."],
+  ["La tua ultima serata","Nella scheda di ogni giocatore l'ultima serata è evidenziata in giallo."],
+  ["Regolamento animato","Tocca l'icona del regolamento in alto e guarda come si apre."]
+]};
+function showNovita(force){
+  let seen=null; try{seen=localStorage.getItem("kov_novita");}catch(e){}
+  if(!force&&seen===NOVITA.ver) return;
+  if(document.getElementById("upd")&&document.getElementById("upd").offsetParent!==null) return;
+  let el=document.getElementById("novita");
+  if(!el){el=document.createElement("div");el.id="novita";document.body.appendChild(el);}
+  el.innerHTML=`<div class="nbox"><div class="nk">NOVITÀ</div><h2>Versione <em>${esc(NOVITA.ver)}</em></h2>
+    <div class="nlist">${NOVITA.voci.map(([t,d],i)=>`<div class="nv" style="--k:${i}"><span class="nd">${i+1}</span><div><b>${esc(t)}</b><p>${esc(d)}</p></div></div>`).join("")}</div>
+    <button class="nok">Ok, andiamo!</button></div>`;
+  const close=()=>{el.classList.remove("open");try{localStorage.setItem("kov_novita",NOVITA.ver);}catch(e){}};
+  el.querySelector(".nok").onclick=close;
+  el.onclick=e=>{if(e.target===el)close();};
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("open")));
+}
+setTimeout(()=>showNovita(false),3000);
 </script>
 </body>
 </html>
