@@ -340,6 +340,14 @@ h1.big em{font-style:normal;color:var(--lime)}
 .bc:last-child .tip::after{left:auto;right:21px;transform:none}
 .bc:first-child .tip{left:-6px;transform:none}
 .bc:first-child .tip::after{left:21px;transform:none}
+.reg-open h1.big,.reg-open .sub{animation:none}
+.reg-open .rsec{transform-origin:top center;animation:secDrop .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0) * 120ms + 60ms)}
+@keyframes secDrop{from{opacity:0;transform:translateY(-18px);clip-path:inset(0 0 100% 0 round 30px)}to{opacity:1;transform:none;clip-path:inset(0 0 0 0 round 30px)}}
+.reg-open .rfact,.reg-open .rsteps li{animation:barUp .5s cubic-bezier(.2,.9,.25,1.15) both}
+.reg-open .rfact{animation-delay:calc(var(--d,0) * 120ms + 220ms)}
+.reg-open .rsteps li{animation-delay:calc(var(--d,0) * 120ms + 260ms + var(--k,0) * 55ms)}
+#rulesBtn svg{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#rulesBtn.on svg{transform:rotate(-8deg) scale(1.1)}
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:30;overflow-y:auto;background:var(--bg);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .sheet.open{transform:none}
@@ -867,11 +875,11 @@ function viewRegole(){
   const brief=`<div class="rhero"><div class="rk">IN BREVE</div>
     ${per?`<div class="rper">${esc(per[1])} → ${esc(per[2])}</div>`:""}
     <div class="rchips">${chips.map(([i,t])=>`<span>${IC[i]}${esc(t)}</span>`).join("")}</div></div>`;
-  const secHTML=S.map((s,si)=>`<div class="rsec">
+  const secHTML=S.map((s,si)=>`<div class="rsec" style="--d:${si}">
     ${s.title?`<div class="rh"><span class="rn">${String(si+1).padStart(2,"0")}</span>${esc(s.title)}</div>`:""}
     ${s.paras.flatMap(sentences).map(t=>`<div class="rfact"><div class="ic">${iconFor(t)}</div><div class="tx">${hl(t)}${teams(t)}</div></div>`).join("")}
     ${s.intro?`<div class="rintro">${hl(s.intro)}</div>`:""}
-    ${s.items.length?`<ol class="rsteps">${s.items.map((it,i)=>`<li><span class="n ${i===0?"l":i===1?"p2":i===2?"p3":""}">${i+1}</span><span class="t">${hl(it)}</span>${i===0?`<span class="tg">decisivo</span>`:""}</li>`).join("")}</ol>`:""}
+    ${s.items.length?`<ol class="rsteps">${s.items.map((it,i)=>`<li style="--k:${i}"><span class="n ${i===0?"l":i===1?"p2":i===2?"p3":""}">${i+1}</span><span class="t">${hl(it)}</span>${i===0?`<span class="tg">decisivo</span>`:""}</li>`).join("")}</ol>`:""}
   </div>`).join("");
   return `<h1 class="big">Regola<em>mento</em>${ARROW}</h1><p class="sub">${esc(((MODEL.title.match(/stagione.*/i)||[MODEL.title])[0]).replace(/^s/,"S"))}</p>${secHTML||`<div class="rules">${esc(all)}</div>`}`;
 }
@@ -880,7 +888,7 @@ function render(){
   setStatus();
   if(!MODEL){$("#view").innerHTML=`<div class="empty card" style="margin-top:40px">Caricamento…</div>`;return;}
   const v={home:viewHome,classifica:viewClassifica,quote:viewQuote,regole:viewRegole}[TAB]();
-  $("#view").innerHTML=`<div class="fade">${v}</div>`;
+  $("#view").innerHTML=`<div class="${TAB==="regole"?"reg-open":"fade"}">${v}</div>`;
   document.querySelectorAll("#tabbar button").forEach(b=>b.classList.toggle("on",b.dataset.tab===TAB));
   $("#rulesBtn").classList.toggle("on",TAB==="regole");
   document.querySelectorAll("#view .bars").forEach(fitBars);
