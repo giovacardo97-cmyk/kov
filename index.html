@@ -949,7 +949,7 @@ function openP(k){
     <div class="st s1"><div><div class="bg">${pct(p.pctSet)}</div><div class="who">Set vinti</div></div><div class="side">${p.setV||0}<small>su ${sets}</small></div></div>
   </div>
   ${days.length?`<div class="paper"><div class="ph"><div><b>${wins}/${played}</b><div class="s">serate vinte</div></div><span class="chip">${ICON.bolt}Lunedì</span></div>
-    ${barsHTML(days.map((d,i)=>{const m=ms[i];return m?{h:m.v/Math.max(1,m.v+m.p),lab:short(d.label),hi:i===bestI,tip:m.v+"–"+m.p,txt:m.v+"-"+m.p}:{none:1,lab:short(d.label)};}))}</div>`:""}
+    ${(()=>{const lastI=ms.reduce((b,m,i)=>m?i:b,-1);return barsHTML(days.map((d,i)=>({d,i})).reverse().map(({d,i})=>{const m=ms[i];return m?{h:m.v/Math.max(1,m.v+m.p),lab:short(d.label),hi:i===lastI,tip:m.v+"–"+m.p,txt:m.v+"-"+m.p}:{none:1,lab:short(d.label)};}));})()}</div>`:""}
   <div class="sec"><h2>Quote</h2></div>
   <div class="kv"><div class="ic">${ICON.card}</div><div class="k">Quote versate</div><div class="v">${eur(p.versato)}</div></div>
   <div class="kv"><div class="ic">${ICON.clock}</div><div class="k">Da saldare</div><div class="v ${p.dapagare<0?"neg":"ok"}">${p.dapagare<0?eur(Math.abs(p.dapagare)):"Niente 👍"}</div></div>
