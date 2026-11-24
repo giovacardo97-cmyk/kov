@@ -132,8 +132,9 @@ body.editing .bar{display:none}
 <div class="bar" id="bar"><div class="in"><div class="info" id="barInfo"></div></div></div>
 <div class="modal" id="mNuovo" onclick="if(event.target===this)chiudi()"><div class="sheet">
   <h2 style="margin-top:0">Nuovo giocatore</h2>
-  <input id="nCognome" placeholder="Cognome" autocapitalize="words">
-  <input id="nNome" placeholder="Nome" autocapitalize="words">
+  <input id="nCognome" placeholder="Cognome (es. Rossi)" autocapitalize="words" oninput="anteprimaNome()">
+  <input id="nNome" placeholder="Nome (es. Mario)" autocapitalize="words" oninput="anteprimaNome()">
+  <div class="sub" id="nAnte" style="margin:4px 2px 0;color:var(--lime)"></div>
   <div class="sub" style="margin:6px 2px 14px">Viene aggiunto in ordine alfabetico in tutte le schede del foglio, con le stesse formule degli altri.</div>
   <div class="row"><button class="btn" style="flex:1" onclick="chiudi()">Annulla</button><button class="btn lime" style="flex:2" onclick="nuovo()">Aggiungi</button></div>
 </div></div>
@@ -290,7 +291,7 @@ function htmlPagamenti(){
 function editPag(x){const b=BOZZA;
   return `<div class="edit"><div class="nome">${nomeDi(x.g)}${x.d.pres?"":"<small>non ha giocato</small>"}</div>
     <div class="ctrls">
-      <div class="eur">€<input inputmode="decimal" placeholder="cifra" value="${b.eur===""?"":b.eur}" oninput="BOZZA.eur=num(this.value)" onkeydown="if(event.key==='Enter')confermaPag('${x.g.key}')"><button class="q" onclick="BOZZA.eur=3;confermaPag('${x.g.key}')">3</button></div>
+      <div class="eur">€<input inputmode="decimal" placeholder="cifra" value="${b.eur===""?"":b.eur}" oninput="BOZZA.eur=num(this.value)" onkeydown="if(event.key==='Enter')confermaPag('${x.g.key}')"><button class="q" onclick="BOZZA.eur=3;const i=this.previousElementSibling;i.value='3';i.focus()">3</button></div>
       <div class="ok"><button class="no" title="Annulla" onclick="annulla()">✕</button><button class="si" title="Salva" onclick="confermaPag('${x.g.key}')">✓</button></div>
     </div></div>`;}
 
@@ -372,7 +373,8 @@ async function aggiungiExtra(){const v=$("exData").value;if(!v){toast("Scegli un
   const j=S.giornate.findIndex(g=>g.iso===v);if(j>=0){J=j;APERTO=null;BOZZA=null;renderSerata.centra=true;renderSerata();}toast("Serata aggiunta ✓");}
 
 /* nuovo giocatore */
-function apriNuovo(){$("mNuovo").classList.add("show");$("nCognome").value="";$("nNome").value="";setTimeout(()=>$("nCognome").focus(),50);}
+function anteprimaNome(){const c=$("nCognome").value.trim(),n=$("nNome").value.trim();$("nAnte").textContent=c&&n?`Nel foglio: cognome "${c}", nome "${n}" → in app "${n} ${c}"`:"";}
+function apriNuovo(){$("nAnte").textContent="";$("mNuovo").classList.add("show");$("nCognome").value="";$("nNome").value="";setTimeout(()=>$("nCognome").focus(),50);}
 function chiudi(){$("mNuovo").classList.remove("show");}
 async function nuovo(){
   const c=$("nCognome").value.trim(),n=$("nNome").value.trim(); if(!c||!n){toast("Servono cognome e nome",true);return;}
@@ -387,19 +389,25 @@ async function nuovo(){
 /* ----------------------------------------------------------- CASSA */
 function segnatePerMese(){const out={};S.giornate.forEach(g=>{if(g.giocata&&g.mese>=0)out[g.mese]=(out[g.mese]||0)+1;});return out;}
 const QUOTA=3;
+/* debiti e incassi come li calcola il foglio (tabella "Versato / Da pagare" in Quote); se manca, li calcolo io */
+function debitiFoglio(){
+  const Q=S.cassa.quote;
+  if(Q&&Q.length)return Q.map(q=>{const i=idx(q.key);return {g:i>=0?S.giocatori[i]:{nome:q.key,cognome:""},versato:+q.versato||0,deve:Math.round(Math.max(0,-(+q.daPagare||0))*100)/100};});
+  return S.giocatori.map((g,i)=>{let pres=0,pag=0;S.celle[i].forEach(c=>{if(c[2]||c[0]!==""||c[1]!=="")pres++;if(c[3]!=="")pag+=+c[3];});
+    return {g,versato:pag,deve:Math.round(Math.max(0,pres*QUOTA-pag)*100)/100};});
+}
 function conti(){
-  let incassato=0,daRicevere=0,debitori=0;
-  S.giocatori.forEach((g,i)=>{let pres=0,pag=0;S.celle[i].forEach(c=>{if(c[2]||c[0]!==""||c[1]!=="")pres++;if(c[3]!=="")pag+=+c[3];});
-    incassato+=pag;const d=pres*QUOTA-pag;if(d>0.001){daRicevere+=d;debitori++;}});
+  const D=debitiFoglio();
+  const incassato=D.reduce((s,x)=>s+x.versato,0), daRicevere=D.reduce((s,x)=>s+x.deve,0), debitori=D.filter(x=>x.deve>0.001).length;
   const som=a=>a.reduce((s,r)=>s+(r.euro===""?0:+r.euro),0);
   const versatoP=som(S.cassa.versato), spese=som(S.cassa.spese), costo=som(S.cassa.mesi);
-  const inCassa=incassato-versatoP-spese, palestra=costo-versatoP, utile=inCassa-palestra, usabile=utile+daRicevere;
+  const inCassa=incassato-versatoP-spese, palestra=costo-versatoP, utile=inCassa-palestra;
   const fv=S.cassa.riepilogo.find(x=>/netto.*usabile/i.test(x.label));
-  return {incassato,daRicevere,debitori,versatoP,spese,costo,inCassa,palestra,utile,usabile,foglio:fv?fv.euro:null};
+  const usabile=fv?fv.euro:utile+daRicevere;   // il netto disponibile è quello del foglio
+  return {incassato,daRicevere,debitori,versatoP,spese,costo,inCassa,palestra,utile,usabile,foglio:null};
 }
 function apriDebiti(){
-  const D=S.giocatori.map((g,i)=>{let pres=0,pag=0;S.celle[i].forEach(c=>{if(c[2]||c[0]!==""||c[1]!=="")pres++;if(c[3]!=="")pag+=+c[3];});
-    return {g,deve:Math.round((pres*QUOTA-pag)*100)/100};}).filter(x=>x.deve>0.001).sort((a,b)=>b.deve-a.deve||a.g.cognome.localeCompare(b.g.cognome));
+  const D=debitiFoglio().filter(x=>x.deve>0.001).sort((a,b)=>b.deve-a.deve||a.g.cognome.localeCompare(b.g.cognome));
   const tot=D.reduce((s,x)=>s+x.deve,0);
   $("debTit").textContent=`Ancora da ricevere · ${fmt(tot)}`;
   $("debLista").innerHTML=D.length?D.map(x=>`<div class="pl" style="cursor:default"><div class="nome">${nomeDi(x.g)}</div><span class="deve">${fmt(x.deve)}</span></div>`).join(""):`<div class="vuoto">Tutti in regola</div>`;
