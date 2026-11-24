@@ -322,6 +322,13 @@ h1.big em{font-style:normal;color:var(--lime)}
 .ph-ok svg{width:14px;height:14px;stroke:#111;stroke-width:2.6;fill:none}
 .ph-no{background:rgba(255,155,74,.16);color:#ff9b4a;box-shadow:inset 0 0 0 1.5px #ff9b4a}
 [data-theme="light"] .ph-no{background:rgba(217,72,15,.08);color:#c2410c;box-shadow:inset 0 0 0 1.5px #d9480f}
+.paper.pres{padding:8px 8px 8px 20px;border-radius:40px;transition:border-radius .2s}
+.paper.pres.open{padding:10px 10px 14px 16px;border-radius:var(--r)}
+.pres-h{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;color:var(--ink);font-size:15px;font-weight:600;text-align:left}
+.pres-h b{font-size:21px;font-weight:800;margin-right:3px;letter-spacing:-.3px}
+.pres-t{width:40px;height:40px;flex:none;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:500;line-height:1;transition:transform .25s}
+.paper.pres.open .pres-t{transform:rotate(45deg)}
+.paper.pres.open .bars{margin-top:4px}
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:30;overflow-y:auto;background:var(--bg);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .sheet.open{transform:none}
@@ -697,6 +704,8 @@ function showFed(){
     ${f.length?(()=>{const vals=[...new Set(f.map(presOf))];return f.map(p=>{const r=vals.indexOf(presOf(p));return `<button class="row" data-p="${esc(p.key)}" onclick="document.getElementById('fedpop').classList.remove('open')"><div class="av ${r===0?"l":r===1?"p2":"p3"}">${r+1}°</div><div class="mid"><div class="nm">${esc(p.nomeCompleto)}</div><div class="ds">${p.dentro?p.pos+"° in classifica":"fuori classifica"}</div></div><div class="pc"><b>${presOf(p)}/${MODEL.giornate}</b><small>serate</small></div></button>`;}).join("");})():`<div class="empty">Nessuno ha fatto tutte le serate… ancora!</div>`}</div>`;
   requestAnimationFrame(()=>el.classList.add('open'));
 }
+let PRES_OPEN=(()=>{try{return localStorage.getItem("kov_pres")==="1";}catch(e){return false;}})();
+function togglePres(){PRES_OPEN=!PRES_OPEN;try{localStorage.setItem("kov_pres",PRES_OPEN?"1":"0");}catch(e){}render();}
 function viewHome(){
   const R=ranked(), dentro=R.filter(p=>p.dentro), king=dentro[0];
   const nn=MODEL.days.map(d=>d.n), maxN=nn.length?Math.max(...nn):0;
@@ -717,8 +726,8 @@ function viewHome(){
       <div class="sc"><span class="${m.v>m.p?"w":""}">${m.v}</span><span>${m.p}</span></div></button>`).join("")}</div>`;
   }
   const days=MODEL.days;
-  const chart=days.length?`<div class="paper"><div class="ph"><div><b>${avg.toLocaleString("it-IT",{maximumFractionDigits:1})}</b><div class="s">giocatori in media a serata</div></div><span class="chip">${ICON.bolt}Presenze</span></div>
-    ${barsHTML(days.map((d,i)=>({h:(d.n-minN*.6)/Math.max(1,maxN-minN*.6),lab:short(d.label),hi:i===days.length-1,tip:d.n+" in campo",txt:d.n})))}</div>`:"";
+  const chart=days.length?`<div class="paper pres${PRES_OPEN?" open":""}"><button class="pres-h" onclick="togglePres()" aria-expanded="${PRES_OPEN}"><span><b>${avg.toLocaleString("it-IT",{maximumFractionDigits:1})}</b> giocatori in media a serata</span><span class="pres-t" aria-hidden="true">+</span></button>
+    ${PRES_OPEN?barsHTML(days.map((d,i)=>({h:(d.n-minN*.6)/Math.max(1,maxN-minN*.6),lab:short(d.label),hi:i===days.length-1,tip:d.n+" in campo",txt:d.n}))):""}</div>`:"";
 
   return `
   <h1 class="big">King of<br><em>Volleyball</em>${ARROW}</h1>
