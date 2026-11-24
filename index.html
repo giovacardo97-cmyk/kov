@@ -484,7 +484,7 @@ html[data-theme=light] .rfact b,html[data-theme=light] .rintro b,html[data-theme
 
 <script>
 /* ===================== IMPOSTAZIONI ===================== */
-const APP_VERSION = "1.3";
+const APP_VERSION = "1.4";
 const CONFIG = {
   sheetId: "1i-faQl6fIT4OdCmS6gsNO1iZvxIdP2K7wcLX5ad2Tl8",
   gids: { Regolamento: "1715913336", Classifica: "0", SetPartite: "701373575", Quote: "2069354552" },
@@ -1011,7 +1011,7 @@ if(window.matchMedia){const mq=matchMedia("(prefers-color-scheme: light)");
   if(mq.addEventListener) mq.addEventListener("change",applyTheme); else if(mq.addListener) mq.addListener(applyTheme);}
 applyTheme();
 
-document.getElementById("ver").textContent="versione "+VER();
+document.getElementById("ver").textContent="versione "+APP_VERSION;
 render(); refresh(); checkUpdate();
 setTimeout(()=>{const sp=document.getElementById('splash');if(sp)sp.remove();},2700);
 </script>
