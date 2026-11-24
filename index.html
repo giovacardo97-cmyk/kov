@@ -322,13 +322,24 @@ h1.big em{font-style:normal;color:var(--lime)}
 .ph-ok svg{width:14px;height:14px;stroke:#111;stroke-width:2.6;fill:none}
 .ph-no{background:rgba(255,155,74,.16);color:#ff9b4a;box-shadow:inset 0 0 0 1.5px #ff9b4a}
 [data-theme="light"] .ph-no{background:rgba(217,72,15,.08);color:#c2410c;box-shadow:inset 0 0 0 1.5px #d9480f}
-.paper.pres{padding:8px 8px 8px 20px;border-radius:40px;transition:border-radius .2s}
+.paper.pres{padding:8px 8px 8px 20px;border-radius:40px}
 .paper.pres.open{padding:10px 10px 14px 16px;border-radius:var(--r)}
 .pres-h{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;color:var(--ink);font-size:15px;font-weight:600;text-align:left}
 .pres-h b{font-size:21px;font-weight:800;margin-right:3px;letter-spacing:-.3px}
 .pres-t{width:40px;height:40px;flex:none;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:500;line-height:1;transition:transform .25s}
 .paper.pres.open .pres-t{transform:rotate(45deg)}
 .paper.pres.open .bars{margin-top:4px}
+.pres-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .5s cubic-bezier(.2,.8,.2,1)}
+.paper.pres.open .pres-b{grid-template-rows:1fr}
+.pres-in{overflow:hidden;min-height:0;opacity:0;transform:translateY(-8px);transition:opacity .35s ease,transform .45s cubic-bezier(.2,.8,.2,1)}
+.paper.pres.open .pres-in{opacity:1;transform:none;transition-delay:.08s}
+.paper.pres{transition:border-radius .35s ease,padding .35s ease}
+.paper.pres.open.anim .bc{animation:barUp .55s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes barUp{from{opacity:0;transform:translateY(26px) scaleY(.6)}to{opacity:1;transform:none}}
+.bc:last-child .tip{left:auto;right:-6px;transform:none}
+.bc:last-child .tip::after{left:auto;right:calc(50% - 1px);transform:none}
+.bc:first-child .tip{left:-6px;transform:none}
+.bc:first-child .tip::after{left:calc(50% - 1px);transform:none}
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:30;overflow-y:auto;background:var(--bg);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .sheet.open{transform:none}
@@ -705,7 +716,13 @@ function showFed(){
   requestAnimationFrame(()=>el.classList.add('open'));
 }
 let PRES_OPEN=(()=>{try{return localStorage.getItem("kov_pres")==="1";}catch(e){return false;}})();
-function togglePres(){PRES_OPEN=!PRES_OPEN;try{localStorage.setItem("kov_pres",PRES_OPEN?"1":"0");}catch(e){}render();}
+function togglePres(btn){PRES_OPEN=!PRES_OPEN;try{localStorage.setItem("kov_pres",PRES_OPEN?"1":"0");}catch(e){}
+  const card=btn&&btn.closest(".paper.pres"); if(!card){render();return;}
+  btn.setAttribute("aria-expanded",PRES_OPEN);
+  if(PRES_OPEN){ card.querySelectorAll(".pres-in .bc").forEach((c,i)=>{c.style.animationDelay=(80+i*35)+"ms";});
+    card.classList.add("anim"); const b=card.querySelector(".bars"); if(b) fitBars(b); }
+  card.classList.toggle("open",PRES_OPEN);
+}
 function viewHome(){
   const R=ranked(), dentro=R.filter(p=>p.dentro), king=dentro[0];
   const nn=MODEL.days.map(d=>d.n), maxN=nn.length?Math.max(...nn):0;
@@ -726,8 +743,8 @@ function viewHome(){
       <div class="sc"><span class="${m.v>m.p?"w":""}">${m.v}</span><span>${m.p}</span></div></button>`).join("")}</div>`;
   }
   const days=MODEL.days;
-  const chart=days.length?`<div class="paper pres${PRES_OPEN?" open":""}"><button class="pres-h" onclick="togglePres()" aria-expanded="${PRES_OPEN}"><span><b>${avg.toLocaleString("it-IT",{maximumFractionDigits:1})}</b> giocatori in media a serata</span><span class="pres-t" aria-hidden="true">+</span></button>
-    ${PRES_OPEN?barsHTML(days.map((d,i)=>({h:(d.n-minN*.6)/Math.max(1,maxN-minN*.6),lab:short(d.label),hi:i===days.length-1,tip:d.n+" in campo",txt:d.n}))):""}</div>`:"";
+  const chart=days.length?`<div class="paper pres${PRES_OPEN?" open":""}"><button class="pres-h" onclick="togglePres(this)" aria-expanded="${PRES_OPEN}"><span><b>${avg.toLocaleString("it-IT",{maximumFractionDigits:1})}</b> giocatori in media a serata</span><span class="pres-t" aria-hidden="true">+</span></button>
+    <div class="pres-b"><div class="pres-in">${barsHTML(days.map((d,i)=>({h:(d.n-minN*.6)/Math.max(1,maxN-minN*.6),lab:short(d.label),hi:i===days.length-1,tip:d.n+" in campo",txt:d.n})))}</div></div></div>`:"";
 
   return `
   <h1 class="big">King of<br><em>Volleyball</em>${ARROW}</h1>
